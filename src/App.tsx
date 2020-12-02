@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import ReactMapGL, { Layer, Source } from "react-map-gl";
+import ReactMapGL, { Layer, Source, Popup } from "react-map-gl";
 import { concave, polygon, multiPoint, featureCollection } from "@turf/turf";
 import * as turf from "@turf/turf";
 import data from "./us-states.json";
@@ -11,6 +11,7 @@ class Map extends Component<{}> {
   state = {
     feature: {},
     stateHovered: null,
+    showpopup: null,
     viewport: {
       width: 400,
       height: 400,
@@ -41,6 +42,19 @@ class Map extends Component<{}> {
           type: "FeatureCollection",
           features: [i],
         };
+        if (stateHovered.features[0].geometry.coordinates[0].length > 1) {
+          let polygon = turf.polygon([
+            stateHovered.features[0].geometry.coordinates[0],
+          ]);
+          let pointOnPolygon = turf.pointOnFeature(polygon);
+          this.setState({ showpopup: pointOnPolygon });
+        } else {
+          let polygon = turf.polygon(
+            stateHovered.features[0].geometry.coordinates[0]
+          );
+          let pointOnPolygon = turf.pointOnFeature(polygon);
+          this.setState({ showpopup: pointOnPolygon });
+        }
         this.setState({ stateHovered: stateHovered });
       } else {
       }
@@ -50,6 +64,7 @@ class Map extends Component<{}> {
   render() {
     const stateHovered: any = this.state.stateHovered;
     const alStates: any = data;
+    const showpopup: any = this.state.showpopup;
 
     return (
       <ReactMapGL
@@ -83,6 +98,20 @@ class Map extends Component<{}> {
             />
           )}
         </Source>
+        {showpopup && (
+          <>
+            <Popup
+              latitude={showpopup.geometry?.coordinates[1]}
+              longitude={showpopup.geometry?.coordinates[0]}
+              closeButton={true}
+              closeOnClick={false}
+              onClose={() => this.setState({ showpopup: null })}
+              anchor="top"
+            >
+              <div>You are here</div>
+            </Popup>
+          </>
+        )}
       </ReactMapGL>
     );
   }
